@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { string } from "zod";
 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     try {

@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-import z, { string } from "zod";
+import z from "zod";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import cors from "cors";
@@ -46,14 +46,23 @@ app.post("/api/v1/signup", async (req: Request, res: Response) => {
                     password: hasedPassword
                 }
             });
-            const token = jwt.sign({ userId: user.id }, typeof process.env.JWT_SECRET);
-            if (user) {
-                return res.status(201).json({
+
+            const userId = user.id
+            // create new account with some balance
+            const account = await prisma.account.create({
+                data:  {
+                    userId,
+                    balance: 1 + Math.random() * 10000
+                }
+            })  
+
+            const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET as string);
+            res.status(201).json({
                     message: "User created successfully",
                     user,
-                    token
+                    token,
+                    account
                 });
-            }
         } catch (error) {
             console.log("err is", error)
             return res.status(500).json({
@@ -137,12 +146,15 @@ app.post("/api/v1/login", async (req: Request, res: Response) => {
 app.put("/api/v1/update-profile", authMiddleware, async (req: Request, res: Response) => {
     try {
         const userId: any = req.userId;
-        const { firstName, lastName } = req.body;
+        const { firstName, lastName, password } = req.body;
+
+        const hashpassword = await bcrypt.hash(password, 10);
         const updatedUser = await prisma.user.update({
             where: { id: userId },
             data: {
                 firstName,
-                lastName
+                lastName,
+                password: hashpassword
             }
         });
         return res.status(200).json({
@@ -191,4 +203,90 @@ app.get("/api/v1/bulk", authMiddleware, async (req: Request, res: Response) => {
     }
 })
 
-app.listen(process.env.PORT || 5000);
+app.get("/api/v1/account/balance", authMiddleware, async(req:Request, res:Response)=>{
+    const userid:any = req.userId
+    const accountdata = await prisma.account.findUnique({
+        where:{
+            userId: userid
+        },
+        select:{
+            balance: true
+        }
+    })
+    const balance = accountdata?.balance
+    res.status(400).json({
+        message: "balance successfully fatched",
+        balance
+    })
+})
+
+
+app.post("/api/v1/account/transfer", authMiddleware, async(req:Request, res:Response)=>{
+    const { amount, to } = req.body;
+    const userId:any = req.userId; 
+    if (!amount || amount <= 0 || !to) {
+        return res.status(400).json({ message: "Invalid input" });
+    }
+
+    try {
+        const result = await prisma.$transaction(async (tx) => {
+            const fromAccount = await tx.account.findUnique({
+                where: {
+                    userId: userId
+                }
+            });
+
+            // Check for sufficient balance.
+            if (!fromAccount || fromAccount.balance < amount) {
+                throw new Error("Insufficient balance");
+            }
+
+            // Find the recipient's account.
+            const toAccount = await tx.account.findUnique({
+                where: {
+                    userId: to 
+                }
+            });
+            if (!toAccount) {
+                throw new Error("Invalid account");
+            }
+            //x Perform the transfer (debit)
+            await tx.account.update({
+                where: {
+                    userId: userId
+                },
+                data: {
+                    balance: {
+                        decrement: amount
+                    }
+                }
+            });
+
+            // 6. Perform the transfer (credit)
+            await tx.account.update({
+                where: {
+                    userId: to
+                },
+                data: {
+                    balance: {
+                        increment: amount
+                    }
+                }
+            });
+            return { message: "Transfer successful" };
+        });
+        // If the transaction was successful, send the result.
+        res.json(result);
+
+    } catch (error: any) {
+        if (error.message === "Insufficient balance" || error.message === "Invalid account") {
+            return res.status(400).json({ message: error.message });
+        }
+        console.error("Transaction failed:", error);
+        res.status(500).json({ message: "An error occurred during the transfer." });
+    }
+})
+
+app.listen(process.env.PORT, () => {
+    console.log("Server is running on port 5000");
+});
