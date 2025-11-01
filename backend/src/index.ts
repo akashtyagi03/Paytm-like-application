@@ -167,9 +167,31 @@ app.put("/api/v1/update-profile", authMiddleware, async (req: Request, res: Resp
     }
 })
 
-app.get("/api/v1/bulk", authMiddleware, async (req: Request, res: Response) => {
+// retrive all user end point
+app.get("/api/v1/bulk/", authMiddleware, async (req: Request, res: Response) => {
+    try {
+        const users = await prisma.user.findMany({
+            select: {
+                id: true,
+                firstName: true,
+                lastName: true
+            }
+        });
+        return res.status(200).json({
+            message: "Users fetched successfully",
+            users
+        });
+    } catch (error) {
+        console.log("err is", error)
+        res.status(500).send("Internal Server Error");
+    }
+})
+
+// get user by filtering end point
+app.get("/api/v1/bulk/filter", authMiddleware, async (req: Request, res: Response) => {
     try {
         const filter = req.query.filter as string | " ";
+        const splitfilter = filter.split(" ")
 
         const users = await prisma.user.findMany({
             where: {
@@ -181,7 +203,7 @@ app.get("/api/v1/bulk", authMiddleware, async (req: Request, res: Response) => {
                     },
                     {
                         lastName: {
-                            contains: filter,
+                            contains: splitfilter[1] || "",
                         }
                     }
                 ]
@@ -203,6 +225,7 @@ app.get("/api/v1/bulk", authMiddleware, async (req: Request, res: Response) => {
     }
 })
 
+// retrive user balance end point
 app.get("/api/v1/account/balance", authMiddleware, async(req:Request, res:Response)=>{
     const userid:any = req.userId
     const accountdata = await prisma.account.findUnique({
@@ -214,13 +237,13 @@ app.get("/api/v1/account/balance", authMiddleware, async(req:Request, res:Respon
         }
     })
     const balance = accountdata?.balance
-    res.status(400).json({
+    res.status(200).json({
         message: "balance successfully fatched",
         balance
     })
 })
 
-
+// send money to other user end point
 app.post("/api/v1/account/transfer", authMiddleware, async(req:Request, res:Response)=>{
     const { amount, to } = req.body;
     const userId:any = req.userId; 

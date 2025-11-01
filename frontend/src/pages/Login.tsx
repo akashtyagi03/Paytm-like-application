@@ -8,19 +8,8 @@ export function Login() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    // const [successMessage, setSuccessMessage] = useState('');
 
     const navigate = useNavigate();
-    // const location = useLocation();
-
-    // // Check for a success message passed from the signup page
-    // useEffect(() => {
-    //     if (location.state?.successMessage) {
-    //         setSuccessMessage(location.state.successMessage);
-    //         // Clear the location state to prevent the message from showing again on refresh
-    //         window.history.replaceState({}, document.title)
-    //     }
-    // }, [location]);
 
     const handleSubmit = async (e:any) => {
         e.preventDefault();
@@ -42,7 +31,6 @@ export function Login() {
             navigate('/Dashboard');
         } catch (err: any) {
             console.log("error is ", err);
-            // setError(errorMessage);
             setIsLoading(false);
         }
     };
@@ -50,12 +38,6 @@ export function Login() {
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
             <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-                {/* {successMessage && (
-                    <div className="flex items-center text-green-700 bg-green-50 p-4 rounded-lg mb-6">
-                        <CheckCircle className="h-6 w-6 mr-3 shrink-0" />
-                        <p className="font-semibold">{successMessage}</p>
-                    </div>
-                )} */}
                 <h2 className="text-3xl font-bold text-gray-800 text-center mb-2">Welcome Back!</h2>
                 <p className="text-gray-500 text-center mb-6">Sign in to access your account.</p>
                 <form onSubmit={handleSubmit} className="space-y-4">
