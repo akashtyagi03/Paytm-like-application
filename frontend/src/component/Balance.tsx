@@ -12,8 +12,6 @@ export function Balance(){
                         authorization: `Bearer ${localStorage.getItem("token")}`,
                     },
                 });
-                console.log(":")
-                console.log(res.data.balance);
                 setBalance(res.data.balance);
             } catch (err) {
                 console.log("Error fetching balance:", err);

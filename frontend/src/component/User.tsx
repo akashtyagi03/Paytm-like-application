@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function User() {
     const [user, setUser] = useState([]);
@@ -58,13 +59,19 @@ export function User() {
 }
 
 export function Users({ users }: any) {
-    return <div>
+    const navigate = useNavigate();
+
+    return <div key={users.id}>
         <div className="border border-gray-400 rounded-lg p-4 m-2 hover:bg-gray-100 cursor-pointer">
             <div className="flex justify-between items-center">
                 <div className="font-bold text-lg">
                     {users.firstName} {users.lastName}
                 </div>
-                <button className="bg-blue-500 text-white rounded-sm w-35 h-9 flex items-center justify-center cursor-pointer">
+                <button onClick={
+                    () => {
+                        navigate(`/sendmoney?id=${users.id}&firstname=${users.firstName}&lastname=${users.lastName}`);
+                    }
+                } className="bg-blue-500 text-white rounded-sm w-35 h-9 flex items-center justify-center cursor-pointer">
                     send money
                 </button>
             </div>

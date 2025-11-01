@@ -6,6 +6,10 @@ import { Dashboard } from './pages/Dashboard'
 import { Sendmoney } from './component/Sendmoney'
 import { Login } from './pages/Login'
 
+// remain landing page for future use
+// add loading spinner for better ux
+// add error handling for better ux
+
 function App() {
 
   return (
@@ -14,7 +18,7 @@ function App() {
         <Routes>
           <Route path='/' element={<Signup />}/>
           <Route path='/login' element={<Login/>}/>
-          <Route path='/dashboard' element={<Dashboard/>}/>
+          <Route path='/dashboard' element={<Dashboard />}/>
           <Route path='/sendmoney' element={<Sendmoney/>}/>
         </Routes>
       </BrowserRouter>
